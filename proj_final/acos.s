@@ -68,7 +68,8 @@ int_handler:
     sw t6, 24(sp)
     sw a1, 28(sp)
     sw a2, 32(sp)
-	sw ra, 36(sp)
+	sw a7, 36(sp)
+	sw ra, 40(sp)
 
     # Identifica a syscall e chama ela
 
@@ -77,16 +78,16 @@ int_handler:
     csrw mepc, t0                   # (&ecall + 4) -> mepc
 
 	addi a7, a7, -10			# a7 - 10
-	li t0, 4
-	mul a7, a7, t0				# (a7 - 10)*4
+	slli a7, a7, 2
 	la t0, lookup_table			# 
 	add a7, a7, t0				
 	lw a7, 0(a7) 
-	jalr ra, a7
+	jalr a7
 
 # Recupera os valores dos registradores
 
-	lw ra, 36(sp)
+	lw ra, 40(sp)
+	lw a7, 36(sp)
     lw a2, 32(sp)
     lw a1, 28(sp)
 	lw t6, 24(sp)
@@ -105,7 +106,7 @@ int_handler:
 
 # ----- System calls ----- #
 
-					Syscall_set_engine_and_steering:
+Syscall_set_engine_and_steering:
     # Controla o motor e o volante #
     # Retorna 0 se os valores passados são válidos #
     # E -1 caso contrário #
@@ -140,7 +141,6 @@ int_handler:
     sb a1, 0(t1)                    # a1 -> t1
 
     li a0, 0
-	
 	ret
 
 error:
@@ -157,11 +157,15 @@ Syscall_set_handbrake:
 
     li t0, 1
     beq a0, t0, set_handbrake       # Se a0 == 1, executa
+	beqz a0, set_handbrake
+	li a0, -1
+
 	ret
     
 set_handbrake:
     la t0, car_handbreak            # &car_handbreak -> t0
     sb a0, 0(t0)                    # a0 -> t0
+	li a0, 0
 
 	ret
 

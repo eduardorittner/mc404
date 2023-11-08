@@ -8,8 +8,8 @@
 
 set_engine:
 	# INPUT #
-	# a0 - vertical #
-	# a1 - horizontal #
+	# a0 - engine #
+	# a1 - steering #
 	# OUTPUT #
 	# a0 - return code #
 
@@ -26,17 +26,9 @@ set_handbrake:
 	# OUTPUT #
 	# a0 - return code #
 
-	beqz a0, 1f
-	li t0, 1
-	beq a0, t0, 1f
-	li a0, -1
-	ret
-
-1:
 	li a7, 11
 	ecall
 
-	li a0, 0
 	ret
 
 # int read_sensor_distance();
@@ -104,7 +96,7 @@ puts:
 	sw a0, 4(sp)
 	sw ra, 0(sp)
 
-	jal strlen_custom
+	jal strlen_custom	# Tamanho contando o '\0'
 
 	mv a1, a0			# Size -> a1
 	lw a0, 4(sp)		# &str -> a0

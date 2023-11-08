@@ -62,7 +62,7 @@ get_position:
 	# a2 - &z #
 	# OUTPUT #
 
-	li a7, 14
+	li a7, 15
 	ecall
 	ret
 
@@ -76,7 +76,7 @@ get_rotation:
 	# a2 - &z #
 	# OUTPUT #
 
-	li a7, 15
+	li a7, 16
 	ecall
 	ret
 

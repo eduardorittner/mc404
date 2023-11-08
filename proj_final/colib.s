@@ -88,7 +88,7 @@ get_time:
 	# OUTPUT #
 	# a0 - system time #
 
-	li a7, 16
+	li a7, 20
 	ecall
 	ret
 
@@ -434,7 +434,7 @@ get_distance:
 	add t0, t0, t2
 
 	mv a0, t0
-	li a1, 50
+	li a1, 20
 
 	jal approx_sqrt
 

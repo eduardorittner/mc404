@@ -129,6 +129,7 @@ int main() {
 
   /* Get route ID and load route's head node */
   int route_id = atoi(gets(buffer));
+  puts(buffer);
   switch (route_id) {
   case 0:
     next = &A_0;

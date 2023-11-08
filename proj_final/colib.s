@@ -146,16 +146,15 @@ next_char:
 	li a7, 17
 	ecall
 
+	beqz a0, end_gets		# Se t0 == 0, cabou
 	lw a0, 8(sp)			# Endereço atual
-	lb t0, 0(a0)			# Char atual
-	beqz t0, end_gets		# Se t0 == 0, cabou
 	addi a0, a0, 1			# Proximo char
 	j next_char
 
 end_gets:
+	lw a0, 4(sp)
 	lw ra, 0(sp)
 	addi sp, sp, 12
-
 	ret
 
 # int atoi (const char *str);
@@ -366,7 +365,7 @@ strlen_custom:
 	# a0 - str size #
 
 	# Inicia contador
-	li t0, -1
+	li t0, 0
 
 1:
 	addi t0, t0, 1			# t0++
@@ -402,7 +401,7 @@ approx_sqrt:
 	addi t3, t3, 1
 	bne t3, a1, 1b
 
-	mv t1, a0
+	mv a0, t1
 
     ret
 

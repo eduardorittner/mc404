@@ -58,7 +58,7 @@ int_handler:
     # t0 - t5
     # a1, a2
     csrrw sp, mscratch, sp          # sp <-> mscratch
-    addi sp, sp, -40
+    addi sp, sp, -64
     sw t0, 0(sp)
     sw t1, 4(sp)
     sw t2, 8(sp)
@@ -72,25 +72,21 @@ int_handler:
 
     # Identifica a syscall e chama ela
 
-    # PARA A LUT
-    # Subtrai 10 de a7
-    # Multiplica por 4
-    # Jalr (ou jarl) no valor dado pela LUT
-
-    # Armazena o ponto de volta do código que chamou a syscall
     csrr t0, mepc                   # (&ecall) - endereço da ecall que gerou a interrupção
     addi t0, t0, 4                  # (&ecall + 4) - instrução seguinte a ecall
     csrw mepc, t0                   # (&ecall + 4) -> mepc
 
-	addi a7, a7, -10			# a7 - 10
+	addi a7, a7, -10
 	li t0, 4
-	mul a7, a7, t0				# (a7 - 10)*4
-	la t0, lookup_table			# 
-	add a7, a7, t0				
-	lw a7, 0(a7) 
-	jalr ra, a7
+	mul a7, a7, t0
+	la t0, lookup_table
+	addi a7, a7, t0
+
+	jalr a7
 
     # Recupera os valores dos registradores
+int_ret:
+
 	lw ra, 36(sp)
     lw a2, 32(sp)
     lw a1, 28(sp)
@@ -101,7 +97,7 @@ int_handler:
     lw t2, 8(sp)
     lw t1, 4(sp)
     lw t0, 0(sp)
-    addi sp, sp, 40
+    addi sp, sp, 64
 
     # Retorna à pilha do usuário
     csrrw sp, mscratch, sp          # sp <-> mscratch
@@ -110,7 +106,7 @@ int_handler:
 
 # ----- System calls ----- #
 
-Syscall_set_engine_and_steering:
+					Syscall_set_engine_and_steering:
     # Controla o motor e o volante #
     # Retorna 0 se os valores passados são válidos #
     # E -1 caso contrário #
@@ -145,6 +141,7 @@ Syscall_set_engine_and_steering:
     sb a1, 0(t1)                    # a1 -> t1
 
     li a0, 0
+	
 	ret
 
 error:
@@ -328,7 +325,6 @@ Syscall_read_serial:
 	li t6, '\n'				# Constante
 	li t0, 0				# Contador
 
-
 1:
 	beq t0, a1, read_ret
 
@@ -354,51 +350,12 @@ Syscall_read_serial:
 
 	j 1b
 
-	ret
-
 add_null:
 	sb zero, 0(a0)
 
 read_ret:
 	mv a0, t0				# Numero de bytes lidos
 	ret
-
-# Ultima versão
-#     li a2, 0
-# 	li t4, '\n'
-# 	mv t3, a0
-#
-# read_char:
-#     # Pede a leitura de um byte
-#     la t0, read_flag
-#     li t1, 1
-#     sb t1, 0(t0)
-#
-#     # Espera a leitura do byte
-# 1:
-#     lb t1, 0(t0)
-#     bnez t1, 1b
-#
-#     la t0, read_byte            # &read_byte -> t0
-#     lb t1, 0(t0)                # *t0 -> t1
-#
-# 	beqz t1, end_read           # If char == '\0', ret
-# 	beq t1, t4, end_read		# If char == '\n', ret
-#
-# 	sb t1, 0(t3)                # Store char in buffer
-#
-# 	addi t3, t3, 1				# Increment current position
-# 	addi a2, a2, 1              # Increment size of buffer
-# 	beq a1, a2, read_ret        # If size == max_size, ret sem '\0'
-#
-#     j read_char                 # Else, continue
-#
-# end_read:
-# 	sb zero, 0(t3)
-#
-# read_ret:
-#     mv a0, a2
-#     ret
 
 Syscall_write_serial:
     # Code - 18 #
@@ -448,7 +405,7 @@ Syscall_get_systime:
     bnez t1, 1b
 
     # Lê o tempo atual
-    la t0, timer_read
+    la t0, timer_byte
     lw a0, 0(t0)
 
 	ret
@@ -488,7 +445,7 @@ lookup_table:
 .set car_handbreak, 0xFFFF0322          # Byte
 
 .set timer_flag, 0xFFFF0100             # Byte
-.set timer_read, 0xFFFF0104             # Byte
+.set timer_byte, 0xFFFF0104             # Byte
 
 .set write_flag, 0xFFFF0500             # Byte
 .set write_byte, 0xFFFF0501             # Byte

@@ -76,13 +76,24 @@ int_handler:
     addi t0, t0, 4                  # (&ecall + 4) - instrução seguinte a ecall
     csrw mepc, t0                   # (&ecall + 4) -> mepc
 
-	addi a7, a7, -10
-	li t0, 4
-	mul a7, a7, t0
-	la t0, lookup_table
-	addi a7, a7, t0
-
-	jalr a7
+	li t0, 10
+	beq t0, a7, Syscall_set_engine_and_steering
+	li t0, 11
+	beq t0, a7, Syscall_set_handbrake
+	li t0, 12
+	beq t0, a7, Syscall_read_sensors
+	li t0, 13
+	beq t0, a7, Syscall_read_sensor_distance
+	li t0, 15
+	beq t0, a7, Syscall_get_position
+	li t0, 16
+	beq t0, a7, Syscall_get_rotation
+	li t0, 17
+	beq t0, a7, Syscall_read_serial
+	li t0, 18
+	beq t0, a7, Syscall_write_serial
+	li t0, 20
+	beq t0, a7, Syscall_get_systime
 
     # Recupera os valores dos registradores
 int_ret:
@@ -142,11 +153,11 @@ int_ret:
 
     li a0, 0
 	
-	ret
+	j int_ret
 
 error:
     li a0, -1
-	ret
+	j int_ret
 
 
 Syscall_set_handbrake:
@@ -158,13 +169,13 @@ Syscall_set_handbrake:
 
     li t0, 1
     beq a0, t0, set_handbrake       # Se a0 == 1, executa
-	ret
+	j int_ret
     
 set_handbrake:
     la t0, car_handbreak            # &car_handbreak -> t0
     sb a0, 0(t0)                    # a0 -> t0
 
-	ret
+	j int_ret
 
 
 Syscall_read_sensors:
@@ -212,7 +223,7 @@ Syscall_read_sensors:
     lw a0, 0(sp)
     addi sp, sp, 4
 
-	ret
+	j int_ret
 
 Syscall_read_sensor_distance:
     # Realiza a leitura do sensor ultrassônico, que retorna #
@@ -239,7 +250,7 @@ Syscall_read_sensor_distance:
     la t0, car_ultrasonic_nearest           # &ultrasonic_nearest -> t0
     lw a0, 0(t0)                            # t0 -> a0
 
-	ret
+	j int_ret
 
 Syscall_get_position:
     # Retorna a posição do carro nos eixos x, y e z #
@@ -274,7 +285,7 @@ Syscall_get_position:
     lw t1, 0(t0)                        # *t0 -> t1
     sw t1, 0(a2)                        # t1 -> &a2
 
-	ret
+	j int_ret
 
 Syscall_get_rotation:
     # Retorna a angulação do carro em relação aos eixos #
@@ -311,7 +322,7 @@ Syscall_get_rotation:
     lw t1, 0(t0)                        # *t0 -> t1
     sw t1, 0(a2)                        # t1 -> &a2
 
-	ret
+	j int_ret
 
 Syscall_read_serial:
     # Lê até N caracteres do port serial #
@@ -355,7 +366,7 @@ add_null:
 
 read_ret:
 	mv a0, t0				# Numero de bytes lidos
-	ret
+	j int_ret
 
 Syscall_write_serial:
     # Code - 18 #
@@ -385,7 +396,7 @@ write_char:
 
 	addi t0, t0, 1
     bne t0, t1, write_char 
-	ret
+	j int_ret
 
 
 Syscall_get_systime:
@@ -408,7 +419,7 @@ Syscall_get_systime:
     la t0, timer_byte
     lw a0, 0(t0)
 
-	ret
+	j int_ret
 
 .set user_stack, 0x07FFFFFC
 .data

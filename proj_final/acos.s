@@ -20,6 +20,8 @@ _start:
     la t0, system_stack_end         # sys_stack -> t0
     csrw mscratch, t0               # t0 -> mscratch
 
+	#TODO da pra tirar interrupções externas e globais teoricamente
+
     # Habilita interrupções externas
     csrr t1, mie                    # mie -> t1
     li t2, 0x800                    # 0x800 -> t2
@@ -52,11 +54,10 @@ _start:
     mret
 
 int_handler:
-    # 
+	# Rotina de tratamento das interrupções
 
     # Salva os valores na pilha de interrupção
-    # t0 - t5
-    # a1, a2
+
     csrrw sp, mscratch, sp          # sp <-> mscratch
     addi sp, sp, -64
     sw t0, 0(sp)
@@ -77,14 +78,14 @@ int_handler:
     addi t0, t0, 4                  # (&ecall + 4) - instrução seguinte a ecall
     csrw mepc, t0                   # (&ecall + 4) -> mepc
 
-	addi a7, a7, -10			# a7 - 10
-	slli a7, a7, 2
-	la t0, lookup_table			# 
-	add a7, a7, t0				
-	lw a7, 0(a7) 
-	jalr a7
+	addi a7, a7, -10			# a7 - 10 -> a7
+	slli a7, a7, 2				# a7 * 4 -> a7
+	la t0, lookup_table			# &lut -> t0
+	add a7, a7, t0				# a7 + t0 -> a7
+	lw a7, 0(a7)				# Carrega endereço da label correspondente
+	jalr a7						# Chama a função de tratamento de interrupção
 
-# Recupera os valores dos registradores
+	# Recupera os valores dos registradores
 
 	lw ra, 40(sp)
 	lw a7, 36(sp)
@@ -150,14 +151,15 @@ error:
 
 Syscall_set_handbrake:
     # Controla o freio de mão do carro #
+	# Retorna 0 se o valor for válido e -1 c.c. #
     # Code - 11 #
     # INPUT #
     # a0 - 1 if handbrake must be set #
     # OUTPUT #
 
-    li t0, 1
+    li t0, 1	
     beq a0, t0, set_handbrake       # Se a0 == 1, executa
-	beqz a0, set_handbrake
+	beqz a0, set_handbrake			# Se a0 == 0, executa
 	li a0, -1
 
 	ret
@@ -217,6 +219,7 @@ Syscall_read_sensors:
 
 	ret
 
+
 Syscall_read_sensor_distance:
     # Realiza a leitura do sensor ultrassônico, que retorna #
     # a distância do objeto mais próximo (m) até 20 metros #
@@ -239,17 +242,19 @@ Syscall_read_sensor_distance:
     lb t1, 0(t0)
     bnez t1, 1b
 
+	# Carrega a leitura em a0
     la t0, car_ultrasonic_nearest           # &ultrasonic_nearest -> t0
     lw a0, 0(t0)                            # t0 -> a0
 
 	ret
 
+
 Syscall_get_position:
     # Retorna a posição do carro nos eixos x, y e z #
     # INPUT #
-    # a0 - address of x pos #
-    # a1 - address of y pos #
-    # a2 - address of z pos #
+    # a0 - &x #
+    # a1 - &y #
+    # a2 - &z #
     # OUTPUT #
 
     # Pede a leitura do gps
@@ -284,9 +289,9 @@ Syscall_get_rotation:
     # x, y e z #
     # Code - 16 #
     # INPUT #
-    # a0 - address of x #
-    # a1 - address of y #
-    # a2 - address of z #
+    # a0 - &x #
+    # a1 - &y #
+    # a2 - &z #
     # OUTPUT #
 
     # Pede a leitura do gps
@@ -323,13 +328,13 @@ Syscall_read_serial:
     # a0 - buffer #
     # a1 - size #
     # OUTPUT #
-    # a0 - number of bytes read #
+    # a0 - Número de bytes lidos #
 
 	li t6, '\n'				# Constante
 	li t0, 0				# Contador
 
 1:
-	beq t0, a1, read_ret
+	beq t0, a1, read_ret	# Se t0 == a1, leu a1 bytes e termina a função
 
 	# Pede a leitura
 	la t2, read_flag
@@ -341,12 +346,15 @@ Syscall_read_serial:
 	lb t1, 0(t2)
 	bnez t1, 2b
 
+	# Carrega o byte lido em t1
 	la t1, read_byte
 	lb t1, 0(t1)
 
+	# Compara o byte lido com '\0' e '\n'
 	beqz t1, add_null		# '\0'
 	beq t1, t6, add_null	# '\n'
 
+	# Se não for final da string, armazena e vai pro próximo
 	sb t1, 0(a0)			# Armazena o valor
 	addi a0, a0, 1			# Prox endereço
 	addi t0, t0, 1			# Prox byte
@@ -354,6 +362,7 @@ Syscall_read_serial:
 	j 1b
 
 add_null:
+	# Armazena '\0' na final da string
 	sb zero, 0(a0)
 
 read_ret:
@@ -386,8 +395,10 @@ write_char:
     lb t3, 0(t2)
     bnez t3, 1b
 
+	# Incrementa a quantdade
 	addi t0, t0, 1
     bne t0, t1, write_char 
+
 	ret
 
 
@@ -407,7 +418,7 @@ Syscall_get_systime:
     lb t1, 0(t0)
     bnez t1, 1b
 
-    # Lê o tempo atual
+    # Carrega a leitura em a0
     la t0, timer_byte
     lw a0, 0(t0)
 

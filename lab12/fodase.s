@@ -1,4 +1,9 @@
 .text
+.set write_flag, 0xFFFF0100
+.set write_byte, 0xFFFF0101
+.set read_flag, 0xFFFF0102 
+.set read_byte, 0xFFFF0103
+.align 16
 
 .globl _start
 
@@ -192,7 +197,7 @@ read:
 
 read_char:
     # Request one char
-    la t0, read_flag
+    li t0, read_flag
     li t1, 1
     sb t1, 0(t0)
 
@@ -203,7 +208,7 @@ read_char:
     j 1b
 
 load_char:
-    la t0, read_byte
+    li t0, read_byte
     lb t1, 0(t0)
     add t3, a1, a0      # Address of current char
     sb t1, 0(t3)        # Store char in buffer
@@ -227,7 +232,7 @@ write:
 
     # Initialize variables
     li t0, 0
-    la t1, write_flag
+    li t1, write_flag
     li t5, 10
     li t6, 1
 
@@ -235,9 +240,9 @@ write:
 write_char:
     add t1, a0, t0          # Address of current char
     lb t2, 0(t1)            # Read char
-    la t1, write_byte       # Address of write_byte
+    li t1, write_byte       # Address of write_byte
     sb t2, 0(t1)            # Put char in write byte
-    la t1, write_flag       # Get address of write_flag
+    li t1, write_flag       # Get address of write_flag
     sb t6, 0(t1)            # Signal that char should be written
 
     # Waits for write to complete
@@ -358,7 +363,7 @@ letter:
 
 end_itoa:
     
-    li t1, '\n'
+    li t1, 10
     sb t1, 0(t0)      # null-terminated string
     mv a0, a1           # a1 is the first byte
     sub a1, t0, a1      # t0 - a1 = size
@@ -389,10 +394,10 @@ atoi:
     li t6, 1            # Default case is positive
     
     lb t0, 0(a0)        # Loads first byte
-    li t1, '+'           # Ascii for '+'
+    li t1, 43           # Ascii for '+'
     beq t0, t1, plus_sign
 
-    li t1, '-'           # Ascii for '-'
+    li t1, 45           # Ascii for '-'
     beq t0, t1, minus_sign 
     j atoi_start         # If there is no sign, just start the loop
     
@@ -459,8 +464,5 @@ str_end:
     ret
 
 .data
-.set write_flag, 0xFFFF0100
-.set write_byte, 0xFFFF0101
-.set read_flag, 0xFFFF0102 
-.set read_byte, 0xFFFF0103
+.bss
 buffer: .skip 0x80

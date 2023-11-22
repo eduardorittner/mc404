@@ -20,8 +20,6 @@ _start:
     la t0, system_stack_end         # sys_stack -> t0
     csrw mscratch, t0               # t0 -> mscratch
 
-	#TODO da pra tirar interrupções externas e globais teoricamente
-
     # Habilita interrupções externas
     csrr t1, mie                    # mie -> t1
     li t2, 0x800                    # 0x800 -> t2
@@ -418,7 +416,7 @@ Syscall_get_systime:
     lb t1, 0(t0)
     bnez t1, 1b
 
-    # Carrega a leitura em a0
+    # Lê o tempo atual
     la t0, timer_byte
     lw a0, 0(t0)
 

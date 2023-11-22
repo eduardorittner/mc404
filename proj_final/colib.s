@@ -118,12 +118,6 @@ puts:
 .globl gets
 
 gets:
-	# TODO 
-	# sei que o erro ta na gets, ou read_serial
-	# Tem que confirmar, pq a read_serial nao deveria armazenar o '\0'
-	# na string, ela deveria retornar 0, por exemplo, e a gets adicionaria
-	# o '\0' no final da string
-
 	# INPUT #
 	# a0 - &str #
 	# OUTPUT #
